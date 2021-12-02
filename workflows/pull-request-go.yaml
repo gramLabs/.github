@@ -1,0 +1,75 @@
+name: Pull Request
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: 'The Go version to download (if necessary) and use. Supports semver spec and ranges.'
+        default: '^1.17'
+        required: false
+        type: string
+    secrets:
+      ssh-private-key:
+        description: 'Private SSH key to register in the SSH agent.'
+        required: true
+
+jobs:
+
+  # Runs the linter with a minimal set of default rules.
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: gramLabs/.github/actions/setup-go
+      with:
+        go-version: '${{ inputs.go-version}}'
+        ssh-private-key: '${{ secrets.ssh-private-key }}'
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: latest
+        args: -E goimports,stylecheck
+        skip-go-installation: true
+
+  # Runs the build to ensure nothing is overtly broken.
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: gramLabs/.github/actions/setup-go
+      with:
+        go-version: '${{ inputs.go-version}}'
+        ssh-private-key: '${{ secrets.ssh-private-key }}'
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: latest
+        args: build
+
+  # Runs the short Go tests, callers may define additional jobs for more in-depth
+  # acceptance testing on pull requests if necessary.
+  test:
+    name: Short Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: gramLabs/.github/actions/setup-go
+      with:
+        go-version: '${{ inputs.go-version}}'
+        ssh-private-key: '${{ secrets.ssh-private-key }}'
+
+    - name: Test
+      run: go test -short ./...
