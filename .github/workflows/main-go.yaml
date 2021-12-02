@@ -27,6 +27,7 @@ jobs:
 
   # Builds and pushes images to GHCR.
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
