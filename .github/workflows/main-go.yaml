@@ -33,7 +33,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up Go
-      uses: gramLabs/.github/actions/setup-go@main
+      uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         go-version: '${{ inputs.go-version}}'
         ssh-private-key: '${{ secrets.ssh-private-key }}'
