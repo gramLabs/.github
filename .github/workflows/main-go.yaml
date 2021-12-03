@@ -12,7 +12,8 @@ on:
       # The SSH key should be a deploy key that gives access to gramLabs private repositories
       ssh-private-key:
         description: 'Private SSH key to register in the SSH agent.'
-        required: true
+        default: ''
+        required: false
       # User name associated with the PAT.
       ghcr-username:
         description: 'Username associated with the PAT used to authenticate to GHCR.'

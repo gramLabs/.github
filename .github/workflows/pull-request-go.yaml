@@ -11,7 +11,8 @@ on:
     secrets:
       ssh-private-key:
         description: 'Private SSH key to register in the SSH agent.'
-        required: true
+        default: ''
+        required: false
 
 jobs:
 
@@ -40,6 +41,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
     steps:
     - name: Checkout
       uses: actions/checkout@v2
