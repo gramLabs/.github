@@ -57,7 +57,7 @@ jobs:
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
       with:
         version: latest
-        args: build --snapshot
+        args: build --single-target --snapshot
 
     - name: Run Go build
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
