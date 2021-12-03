@@ -11,7 +11,6 @@ on:
     secrets:
       ssh-private-key:
         description: 'Private SSH key to register in the SSH agent.'
-        default: ''
         required: false
 
 jobs:
@@ -41,7 +40,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -54,9 +52,13 @@ jobs:
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
+      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
       with:
         version: latest
         args: build --snapshot
+    - name: Run Go build
+      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
+      run: go build .
 
   # Runs the short Go tests, callers may define additional jobs for more in-depth
   # acceptance testing on pull requests if necessary.
