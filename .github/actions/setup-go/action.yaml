@@ -16,7 +16,7 @@ runs:
 
   - uses: actions/setup-go@v2
     with:
-      go-version: '${{ inputs.go-version}}'
+      go-version: '${{ inputs.go-version }}'
 
   - id: go-env
     shell: bash
