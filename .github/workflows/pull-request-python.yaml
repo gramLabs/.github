@@ -1,0 +1,36 @@
+name: Pull Request
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'The Python version to download (if necessary) and use.'
+        default: '3.8'
+        required: false
+        type: string
+
+jobs:
+
+  # Build is a single job to lint and test
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: gramLabs/.github/.github/actions/setup-python@main
+      with:
+        python-version: '${{ inputs.python-version}}'
+
+    - name: Lint with pylint
+      run: |
+        pip install pylint
+        pylint --exit-zero $(find . \( -name tests -depth 1 -print \) -or \( -name __init__.py -depth 2 -exec dirname {} \; \))
+
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pip install .
+        pytest
