@@ -56,3 +56,11 @@ jobs:
       with:
         version: latest
         args: release
+
+    - name: Deploy image
+      env:
+        GH_TOKEN: '${{ secrets.ghcr-password }}'
+        GH_REPO: gramLabs/stormforge-app
+      run: |
+        gh workflow run promote_image_to_dev.yaml --ref main -f image="ghcr.io/${{ github.repository }}:sha-$(git rev-parse --short HEAD)"
+

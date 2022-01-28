@@ -30,10 +30,16 @@ runs:
       flavor: latest=false
       tags: type=sha
 
-  - name: Build and push
-    uses: docker/build-push-action@v2
+  - uses: docker/build-push-action@v2
     with:
       context: .
       push: true
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
+
+  - shell: bash
+    env:
+      GH_TOKEN: '${{ inputs.ghcr-password }}'
+      GH_REPO: gramLabs/stormforge-app
+    run: |
+      gh workflow run promote_image_to_dev.yaml --ref main -f image="${{ steps.meta.outputs.tags }}"
