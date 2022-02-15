@@ -65,7 +65,7 @@ jobs:
       # Hack for testing secret with 'if'
       env:
         REGISTRY_PASSWORD: '${{ secrets.registry-username }}'
-      if: "${{ env.MY_KEY != '' }}"
+      if: "${{ env.REGISTRY_PASSWORD != '' }}"
       with:
         registry: registry.stormforge.io
         username: '${{ secrets.registry-username }}'
