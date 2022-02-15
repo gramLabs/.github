@@ -22,6 +22,14 @@ on:
       ghcr-password:
         description: 'PAT token used to authenticate to GHCR.'
         required: true
+      # User for authenticating to the private StormForge registry.
+      registry-username:
+        description: 'Username for the StormForge registry'
+        required: false
+      # Password for authenticating to the private StormForge registry.
+      registry-password:
+        description: 'Password for the StormForge registry'
+        required: false
 
 jobs:
 
@@ -48,8 +56,17 @@ jobs:
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
+        # TODO We aren't using GHCR for events, we can probably use GITHUB_TOKEN
         username: '${{ secrets.ghcr-username }}'
         password: '${{ secrets.ghcr-password }}'
+
+    - name: Login to StormForge Registry
+      uses: docker/login-action@v1
+      if: ${{ secrets.registry-username }} != ''
+      with:
+        registry: registry.stormforge.io
+        username: '${{ secrets.registry-username }}'
+        password: '${{ secrets.registry-password }}'
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
