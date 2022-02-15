@@ -62,7 +62,7 @@ jobs:
 
     - name: Login to StormForge Registry
       uses: docker/login-action@v1
-      if: ${{ secrets.registry-username }} != ''
+      if: secrets.registry-username != ''
       with:
         registry: registry.stormforge.io
         username: '${{ secrets.registry-username }}'
