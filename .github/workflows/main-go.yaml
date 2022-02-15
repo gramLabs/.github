@@ -62,7 +62,10 @@ jobs:
 
     - name: Login to StormForge Registry
       uses: docker/login-action@v1
-      if: secrets.registry-username != ''
+      # Hack for testing secret with 'if'
+      env:
+        REGISTRY_PASSWORD: '${{ secrets.registry-username }}'
+      if: "${{ env.MY_KEY != '' }}"
       with:
         registry: registry.stormforge.io
         username: '${{ secrets.registry-username }}'
