@@ -80,6 +80,8 @@ jobs:
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
+      env:
+        GITHUB_TOKEN: '${{ github.token }}'
       with:
         version: latest
         args: release
