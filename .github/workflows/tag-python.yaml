@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'The Python version to download (if necessary) and use.'
+        default: '3.8'
+        required: false
+        type: string
+      image-name:
+        description: 'The image name to generate.'
+        required: true # TODO We should provide a default
+        type: string
+    secrets:
+      # User for authenticating to the private StormForge registry.
+      registry-username:
+        description: 'Username for the StormForge registry'
+        required: false
+      # Password for authenticating to the private StormForge registry.
+      registry-password:
+        description: 'Password for the StormForge registry'
+        required: false
+
+jobs:
+
+  # Builds and pushes images to the private registry.
+  deploy:
+    name: Deploy Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to StormForge Registry
+      uses: docker/login-action@v1
+      with:
+        registry: registry.stormforge.io
+        username: '${{ secrets.registry-username }}'
+        password: '${{ secrets.registry-password }}'
+
+    - name: Docker Metadata
+      uses: docker/metadata-action@v3
+      id: meta
+      with:
+        images: registry.stormforge.io/${{ inputs.image-name }}
+        tags: 'type=semver,pattern={{version}}'
+
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
