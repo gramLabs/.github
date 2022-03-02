@@ -26,11 +26,8 @@ jobs:
 
     - name: Lint with pylint
       run: |
-        pip install pylint
-        pylint --exit-zero $(find . \( -name tests -maxdepth 1 -print \) -or \( -name __init__.py -maxdepth 2 -exec dirname {} \; \))
+        sh lint.sh
 
     - name: Test with pytest
       run: |
-        pip install pytest
-        pip install .
-        pytest
+        sh coverage.sh
