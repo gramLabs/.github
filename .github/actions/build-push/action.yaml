@@ -10,6 +10,10 @@ inputs:
   ghcr-password:
     description: 'PAT token used to authenticate to GHCR.'
     required: true
+  cluster:
+    description: 'The development cluster to target.'
+    default: 'dev-1'
+    required: false
 
 runs:
   using: "composite"
@@ -42,4 +46,7 @@ runs:
       GH_TOKEN: '${{ inputs.ghcr-password }}'
       GH_REPO: gramLabs/stormforge-app
     run: |
-      gh workflow run promote_image_to_dev.yaml --ref main -f image="${{ steps.meta.outputs.tags }}"
+      gh workflow run promote_image_to_dev.yaml \
+        --ref main \
+        -f image="${{ steps.meta.outputs.tags }}" \
+        -f cluster="${{ inputs.cluster }}"

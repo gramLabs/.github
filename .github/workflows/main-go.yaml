@@ -13,6 +13,11 @@ on:
         default: 1
         required: false
         type: number
+      cluster:
+        description: 'The development cluster to target.'
+        default: 'dev-1'
+        required: false
+        type: string
     secrets:
       # The SSH key should be a deploy key that gives access to gramLabs private repositories
       ssh-private-key:
@@ -91,5 +96,8 @@ jobs:
         GH_TOKEN: '${{ secrets.ghcr-password }}'
         GH_REPO: gramLabs/stormforge-app
       run: |
-        gh workflow run promote_image_to_dev.yaml --ref main -f image="ghcr.io/${{ github.repository }}:sha-$(git rev-parse --short HEAD)"
+        gh workflow run promote_image_to_dev.yaml \
+          --ref main \
+          -f image="ghcr.io/${{ github.repository }}:sha-$(git rev-parse --short HEAD)" \
+          -f cluster="${{ inputs.cluster }}"
 

@@ -8,6 +8,11 @@ on:
         default: '3.8'
         required: false
         type: string
+      cluster:
+        description: 'The development cluster to target.'
+        default: 'dev-1'
+        required: false
+        type: string
     secrets:
       # User name associated with the PAT.
       ghcr-username:
@@ -34,3 +39,4 @@ jobs:
       with:
         ghcr-username: '${{ secrets.ghcr-username }}'
         ghcr-password: '${{ secrets.ghcr-password }}'
+        cluster: '${{ inputs.cluster }}'
