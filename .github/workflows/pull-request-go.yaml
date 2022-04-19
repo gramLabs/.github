@@ -34,7 +34,6 @@ jobs:
       with:
         version: latest
         args: -E goimports,stylecheck
-        skip-go-installation: true
         skip-pkg-cache: true
         skip-build-cache: true
 
