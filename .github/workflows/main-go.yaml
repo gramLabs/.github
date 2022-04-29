@@ -54,10 +54,10 @@ jobs:
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: Set up Go
-      uses: gramLabs/.github/.github/actions/setup-go@main
+      uses: gramLabs/.github/.github/actions/setup-go@ghcr-pat
       with:
         go-version: '${{ inputs.go-version}}'
-        ssh-private-key: '${{ secrets.ssh-private-key }}'
+        ssh-private-key: '${{ secrets.ghcr-password }}'
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
