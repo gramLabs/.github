@@ -19,24 +19,12 @@ on:
         required: false
         type: string
     secrets:
-      # The SSH key should be a deploy key that gives access to gramLabs private repositories
-      ssh-private-key:
-        description: 'Private SSH key to register in the SSH agent.'
-        required: false
-      # User name associated with the PAT.
-      ghcr-username:
-        description: 'Username associated with the PAT used to authenticate to GHCR.'
+      gh-token:
+        description: 'PAT used for triggering workflows and pulling Go modules.'
         required: true
-      # PAT for authenticating to GHCR, we cannot use the GITHUB_TOKEN because it would not
-      # trigger subsequent actions necessary for continuous deployment.
-      ghcr-password:
-        description: 'PAT token used to authenticate to GHCR.'
-        required: true
-      # User for authenticating to the private StormForge registry.
       registry-username:
         description: 'Username for the StormForge registry'
         required: false
-      # Password for authenticating to the private StormForge registry.
       registry-password:
         description: 'Password for the StormForge registry'
         required: false
@@ -54,10 +42,10 @@ jobs:
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: Set up Go
-      uses: gramLabs/.github/.github/actions/setup-go@ghcr-pat
+      uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         go-version: '${{ inputs.go-version}}'
-        ssh-private-key: '${{ secrets.ghcr-password }}'
+        gh-token: '${{ secrets.gh-token }}'
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
@@ -68,7 +56,6 @@ jobs:
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
-        # TODO We aren't using GHCR for events, we can probably use GITHUB_TOKEN
         username: '${{ github.actor }}'
         password: '${{ github.token }}'
 
@@ -76,8 +63,8 @@ jobs:
       uses: docker/login-action@v1
       # Hack for testing secret with 'if'
       env:
-        REGISTRY_PASSWORD: '${{ secrets.registry-username }}'
-      if: "${{ env.REGISTRY_PASSWORD != '' }}"
+        REGISTRY_USERNAME: '${{ secrets.registry-username }}'
+      if: "${{ env.REGISTRY_USERNAME != '' }}"
       with:
         registry: registry.stormforge.io
         username: '${{ secrets.registry-username }}'
@@ -93,7 +80,7 @@ jobs:
 
     - name: Deploy image
       env:
-        GH_TOKEN: '${{ secrets.ghcr-password }}'
+        GH_TOKEN: '${{ secrets.gh-token }}'
         GH_REPO: gramLabs/stormforge-app
       run: |
         gh workflow run promote_image_to_dev.yaml \

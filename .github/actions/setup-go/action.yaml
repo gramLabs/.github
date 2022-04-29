@@ -5,8 +5,8 @@ inputs:
     description: 'The Go version to download (if necessary) and use. Supports semver spec and ranges.'
     default: '~1.17'
     required: false
-  ssh-private-key:
-    description: 'Private SSH key to register in the SSH agent.'
+  gh-token:
+    description: 'PAT used for pulling Go modules.'
     default: ''
     required: false
 
@@ -20,12 +20,13 @@ runs:
 
   - id: go-env
     shell: bash
+    env:
+      ACCESS_TOKEN: '${{ inputs.gh-token }}'
     run: |
-      #git config --global \
-      #  "url.git@github.com:${{ github.repository_owner }}.insteadOf" \
-      #  "https://github.com/${{ github.repository_owner }}"
-      git config --global http.https://github.com/gramLabs/.extraheader \
-          "AUTHORIZATION: basic $(echo -n "x-access-token:${{ inputs.ssh-private-key }}" | base64 -w 0)"
+      if [ -n "${ACCESS_TOKEN}" ]; then
+        git config --global http.https://github.com/gramLabs/.extraheader \
+            "AUTHORIZATION: basic $(echo -n "x-access-token:${ACCESS_TOKEN}" | base64 -w 0)"
+      fi
       go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}"
       echo "::set-output name=go-cache::$(go env GOCACHE)"
       echo "::set-output name=go-mod-cache::$(go env GOMODCACHE)"
@@ -38,8 +39,3 @@ runs:
       key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       restore-keys: |
         ${{ runner.os }}-go-
-
-#  - uses: webfactory/ssh-agent@v0.5.4
-#    if: inputs.ssh-private-key != ''
-#    with:
-#      ssh-private-key: '${{ inputs.ssh-private-key }}'

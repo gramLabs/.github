@@ -9,8 +9,8 @@ on:
         required: false
         type: string
     secrets:
-      ssh-private-key:
-        description: 'Private SSH key to register in the SSH agent.'
+      gh-token:
+        description: 'PAT used for pulling Go modules.'
         required: false
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         go-version: '${{ inputs.go-version}}'
-        ssh-private-key: '${{ secrets.ssh-private-key }}'
+        gh-token: '${{ secrets.gh-token }}'
 
     - name: Lint
       uses: golangci/golangci-lint-action@v3
@@ -49,7 +49,7 @@ jobs:
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         go-version: '${{ inputs.go-version}}'
-        ssh-private-key: '${{ secrets.ssh-private-key }}'
+        gh-token: '${{ secrets.gh-token }}'
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
@@ -75,7 +75,7 @@ jobs:
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         go-version: '${{ inputs.go-version}}'
-        ssh-private-key: '${{ secrets.ssh-private-key }}'
+        gh-token: '${{ secrets.gh-token }}'
 
     - name: Test
       run: go test -short ./...
