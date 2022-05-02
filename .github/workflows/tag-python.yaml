@@ -13,14 +13,12 @@ on:
         required: true # TODO We should provide a default
         type: string
     secrets:
-      # User for authenticating to the private StormForge registry.
       registry-username:
         description: 'Username for the StormForge registry'
-        required: false
-      # Password for authenticating to the private StormForge registry.
+        required: true
       registry-password:
         description: 'Password for the StormForge registry'
-        required: false
+        required: true
 
 jobs:
 

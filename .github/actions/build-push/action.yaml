@@ -1,14 +1,8 @@
 name: 'Build Push'
 description: 'Builds and pushes a Docker image to GHCR.'
 inputs:
-  # User name associated with the PAT.
-  ghcr-username:
-    description: 'Username associated with the PAT used to authenticate to GHCR.'
-    required: true
-  # PAT for authenticating to GHCR, we cannot use the GITHUB_TOKEN because it would not
-  # trigger subsequent actions necessary for continuous deployment.
-  ghcr-password:
-    description: 'PAT token used to authenticate to GHCR.'
+  gh-token:
+    description: 'PAT used for triggering workflows.'
     required: true
   cluster:
     description: 'The development cluster to target.'
@@ -24,8 +18,8 @@ runs:
   - uses: docker/login-action@v1
     with:
       registry: ghcr.io
-      username: '${{ inputs.ghcr-username }}'
-      password: '${{ inputs.ghcr-password }}'
+      username: '${{ github.actor }}'
+      password: '${{ github.token }}'
 
   - uses: docker/metadata-action@v3
     id: meta
@@ -43,7 +37,7 @@ runs:
 
   - shell: bash
     env:
-      GH_TOKEN: '${{ inputs.ghcr-password }}'
+      GH_TOKEN: '${{ inputs.gh-token }}'
       GH_REPO: gramLabs/stormforge-app
     run: |
       gh workflow run promote_image_to_dev.yaml \
