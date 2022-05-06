@@ -41,7 +41,7 @@ jobs:
         password: '${{ secrets.registry-password }}'
 
     - name: Docker Metadata
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v4
       id: meta
       with:
         images: registry.stormforge.io/${{ inputs.image-name }}
