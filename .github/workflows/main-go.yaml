@@ -13,6 +13,11 @@ on:
         default: 1
         required: false
         type: number
+      upload-artifacts:
+        description: 'If true, preserve build artifacts on the job.'
+        default: false
+        required: false
+        type: boolean
       cluster:
         description: 'The development cluster to target.'
         default: 'dev-1'
@@ -77,6 +82,16 @@ jobs:
       with:
         version: latest
         args: release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      if: '${{ inputs.upload-artifacts}}'
+      with:
+        name: dist-archives
+        path: |
+          dist/*_checksums.txt
+          dist/*.tar.gz
+          dist/*.zip
 
     - name: Deploy image
       env:
