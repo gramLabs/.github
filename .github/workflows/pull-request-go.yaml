@@ -52,7 +52,7 @@ jobs:
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v2
+      uses: goreleaser/goreleaser-action@v3
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
       with:
         version: latest
