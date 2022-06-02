@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       go-version:
-        description: 'The Go version to download (if necessary) and use. Supports semver spec and ranges.'
+        description: 'Currently ignored in favor of the go.mod file.'
         default: '~1.17'
         required: false
         type: string
@@ -26,7 +26,6 @@ jobs:
     - name: Set up Go
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
-        go-version: '${{ inputs.go-version}}'
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Lint
@@ -48,7 +47,6 @@ jobs:
     - name: Set up Go
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
-        go-version: '${{ inputs.go-version}}'
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Run GoReleaser
@@ -74,7 +72,6 @@ jobs:
     - name: Set up Go
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
-        go-version: '${{ inputs.go-version}}'
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Test
