@@ -5,6 +5,7 @@ inputs:
     description: 'The Go version to download (if necessary) and use. Supports semver spec and ranges.'
     default: '~1.17'
     required: false
+    deprecationMessage: 'The Go version is now read directly from the ./go.mod file'
   gh-token:
     description: 'PAT used for pulling Go modules.'
     default: ''
@@ -16,7 +17,8 @@ runs:
 
   - uses: actions/setup-go@v3
     with:
-      go-version: '${{ inputs.go-version }}'
+      go-version-file: 'go.mod'
+      cache: true
 
   - id: go-env
     shell: bash
@@ -28,14 +30,3 @@ runs:
             "AUTHORIZATION: basic $(echo -n "x-access-token:${ACCESS_TOKEN}" | base64 -w 0)"
       fi
       go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}"
-      echo "::set-output name=go-cache::$(go env GOCACHE)"
-      echo "::set-output name=go-mod-cache::$(go env GOMODCACHE)"
-
-  - uses: actions/cache@v3
-    with:
-      path: |
-        ${{ steps.go-env.outputs.go-cache }}
-        ${{ steps.go-env.outputs.go-mod-cache }}
-      key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      restore-keys: |
-        ${{ runner.os }}-go-
