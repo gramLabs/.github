@@ -32,7 +32,7 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
-        args: -E goimports,stylecheck
+        args: -E goimports,stylecheck --timeout 2m
         skip-pkg-cache: true
         skip-build-cache: true
 
