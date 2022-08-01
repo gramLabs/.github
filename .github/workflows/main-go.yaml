@@ -100,8 +100,13 @@ jobs:
         GH_TOKEN: '${{ secrets.gh-token }}'
         GH_REPO: gramLabs/stormforge-app
       run: |
+        if [ "${GITHUB_REF_TYPE}" == "tag" ]; then
+          tag="${GITHUB_REF##*/v}"
+        else
+          tag="sha-$(git rev-parse --short HEAD)"
+        fi
         gh workflow run promote_image_to_dev.yaml \
           --ref main \
-          -f image="ghcr.io/${{ github.repository }}:sha-$(git rev-parse --short HEAD)" \
+          -f image="ghcr.io/${{ github.repository }}:${tag}" \
           -f cluster="${{ inputs.cluster }}"
 
