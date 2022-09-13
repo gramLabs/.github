@@ -27,6 +27,9 @@ on:
       gh-token:
         description: 'PAT used for triggering workflows and pulling Go modules.'
         required: true
+      homebrew-token:
+        description: 'PAT used for publishing to the Homebrew Tap (CLI only).'
+        required: false
       registry-username:
         description: 'Username for the StormForge registry'
         required: false
@@ -81,6 +84,7 @@ jobs:
       uses: goreleaser/goreleaser-action@v3
       env:
         GITHUB_TOKEN: '${{ secrets.gh-token }}'
+        HOMEBREW_TAP_GITHUB_TOKEN: '${{ secrets.homebrew-token }}'
       with:
         version: latest
         args: release
