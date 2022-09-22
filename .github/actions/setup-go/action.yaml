@@ -1,5 +1,5 @@
 name: 'Setup Go'
-description: 'Configures Go and sets up Git/SSH for private module access.'
+description: 'Configures Go and sets up Git for private module access.'
 inputs:
   go-version:
     description: 'The Go version to download (if necessary) and use. Supports semver spec and ranges.'

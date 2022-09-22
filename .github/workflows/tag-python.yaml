@@ -52,6 +52,7 @@ jobs:
         images: registry.stormforge.io/${{ inputs.image-name }}
         flavor: latest=true
         tags: 'type=semver,pattern={{version}}'
+
     - name: Build and push
       uses: docker/build-push-action@v3
       with:
