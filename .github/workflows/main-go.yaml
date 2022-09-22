@@ -36,6 +36,13 @@ on:
       registry-password:
         description: 'Password for the StormForge registry'
         required: false
+    outputs:
+      artifacts:
+        description: Build result artifacts.
+        value: ${{ jobs.deploy.outputs.artifacts }}
+      metadata:
+        description: Build result metadata.
+        value: ${{ jobs.deploy.outputs.metadata }}
 
 jobs:
 
@@ -43,6 +50,9 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    outputs:
+      artifacts: ${{ steps.goreleaser.outputs.artifacts }}
+      metadata: ${{ steps.goreleaser.outputs.metadata }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -81,6 +91,7 @@ jobs:
         password: '${{ secrets.registry-password }}'
 
     - name: Run GoReleaser
+      id: goreleaser
       uses: goreleaser/goreleaser-action@v3
       env:
         GITHUB_TOKEN: '${{ secrets.gh-token }}'
