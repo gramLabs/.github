@@ -2,12 +2,6 @@ name: Pull Request
 
 on:
   workflow_call:
-    inputs:
-      go-version:
-        description: 'Currently ignored in favor of the go.mod file.'
-        default: '~1.17'
-        required: false
-        type: string
     secrets:
       gh-token:
         description: 'PAT used for pulling Go modules.'

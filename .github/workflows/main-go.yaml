@@ -3,11 +3,6 @@ name: Main
 on:
   workflow_call:
     inputs:
-      go-version:
-        description: 'Currently ignored in favor of the go.mod file.'
-        default: '~1.17'
-        required: false
-        type: string
       fetch-depth:
         description: 'The fetch depth for checking out code. Must be 0 for GoReleaser to recognize tags.'
         default: 1
@@ -66,6 +61,8 @@ jobs:
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
+      with:
+        platforms: 'arm64'
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
