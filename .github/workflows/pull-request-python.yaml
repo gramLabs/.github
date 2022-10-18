@@ -11,23 +11,23 @@ on:
 
 jobs:
 
-  # Build is a single job to lint and test
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ github.repository }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: gramLabs/.github/.github/actions/setup-python@main
-      with:
-        python-version: '${{ inputs.python-version}}'
-
     - name: Lint with pylint
+      with:
+        image: '${{ github.repository	}}'
       run: |
-        sh lint.sh
+        docker build -t ${{ env.IMAGE }} --build-arg TARGET=lint .
+        docker run --rm ${{ env.IMAGE }}
 
     - name: Test with pytest
       run: |
-        sh coverage.sh
+        docker build -t ${{ env.IMAGE }} --build-arg TARGET=test .
+        docker run --rm ${{ env.IMAGE }}
