@@ -14,20 +14,16 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      IMAGE: ${{ github.repository }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
 
     - name: Lint with pylint
-      with:
-        image: '${{ github.repository	}}'
       run: |
-        docker build -t ${{ env.IMAGE }} --build-arg TARGET=lint .
-        docker run --rm ${{ env.IMAGE }}
+        docker build -t local:lint --build-arg TARGET=lint .
+        docker run --rm local:lint
 
     - name: Test with pytest
       run: |
-        docker build -t ${{ env.IMAGE }} --build-arg TARGET=test .
-        docker run --rm ${{ env.IMAGE }}
+        docker build -t local:test --build-arg TARGET=test .
+        docker run --rm local:test
