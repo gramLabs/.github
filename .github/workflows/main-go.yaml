@@ -109,11 +109,10 @@ jobs:
 
     - name: Deploy image
       env:
-        GH_TOKEN: '${{ secrets.gh-token }}'
         GH_REPO: gramLabs/stormforge-app
+        GH_TOKEN: ${{ secrets.gh-token }}
       run: |
-        gh workflow run 18788892 \
-          --ref main \
+        gh workflow run promote_image_to_dev.yaml \
           -f image="ghcr.io/${{ github.repository }}:${{ fromJson(steps.goreleaser.outputs.metadata).version }}" \
           -f cluster="${{ inputs.cluster }}"
 

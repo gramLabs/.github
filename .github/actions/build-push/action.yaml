@@ -39,10 +39,9 @@ runs:
 
   - shell: bash
     env:
-      GH_TOKEN: '${{ inputs.gh-token }}'
       GH_REPO: gramLabs/stormforge-app
+      GH_TOKEN: ${{ inputs.gh-token }}
     run: |
-      gh workflow run 18788892 \
-        --ref main \
+      gh workflow run promote_image_to_dev.yaml \
         -f image="${{ steps.meta.outputs.tags }}" \
         -f cluster="${{ inputs.cluster }}"
