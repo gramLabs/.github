@@ -1,0 +1,170 @@
+# main-go-software.yaml
+#
+# This is the primary shared workflow for building and deploying code on the main branch
+# of a "software" project (i.e. one that periodically released as opposed to continuously).
+#
+# To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
+# GoReleaser must be configured to build a linux/amd64/v1 binary, e.g.:
+#
+#    before:
+#      hooks: ["go mod tidy", "go generate ./..."]
+#    builds:
+#    - env:
+#      - CGO_ENABLED=0
+#      goos:
+#      - linux
+#      goarch:
+#      - amd64
+#
+name: Main
+
+on:
+  workflow_call:
+    inputs:
+      build-contexts:
+        description: 'List of additional build contexts (e.g., name=path).'
+        default: ''
+        required: false
+        type: string
+    secrets:
+      gh-token:
+        description: 'PAT used for triggering workflows and pulling Go modules.'
+        required: true
+      homebrew-token:
+        description: 'PAT used for publishing to the Homebrew Tap (CLI only).'
+        required: false
+    outputs:
+      artifacts:
+        description: Build result artifacts.
+        value: ${{ jobs.deploy.outputs.artifacts }}
+      metadata:
+        description: Build result metadata.
+        value: ${{ jobs.deploy.outputs.metadata }}
+      tags:
+        description: Docker tags.
+        value: ${{ jobs.deploy.outputs.tags }}
+
+jobs:
+
+  # Builds and pushes images to GHCR.
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    outputs:
+      artifacts: ${{ steps.goreleaser.outputs.artifacts }}
+      metadata: ${{ steps.goreleaser.outputs.metadata }}
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        # We need full history for GoReleaser
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: gramLabs/.github/.github/actions/setup-go@main
+      with:
+        gh-token: ${{ secrets.gh-token }}
+
+    - name: Run GoReleaser
+      id: goreleaser
+      uses: goreleaser/goreleaser-action@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.gh-token }}
+        HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.homebrew-token }}
+      with:
+        version: latest
+        args: release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-archives
+        path: |
+          dist/*_checksums.txt
+          dist/*.tar.gz
+          dist/*.zip
+
+    - name: Detect platforms
+      # The GoReleaser build creates the platform specific binaries we need. Based
+      # on what distributions are available, we will build the corresponding images.
+      id: platforms
+      env:
+        PROJECT_NAME: ${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}
+      run: |
+        for p in amd64_v1 arm64 ; do
+          dir="${PROJECT_NAME}_linux_${p}"
+          [[ -d "dist/${dir}" ]] && echo "context_${p}=${dir}" >> $GITHUB_OUTPUT
+        done
+
+    - name: Docker meta
+      uses: docker/metadata-action@v4
+      id: meta
+      with:
+        images: ghcr.io/${{ github.repository }}
+        # It's important that this only produce a single "tags" output
+        flavor: latest=false
+        tags: type=raw,value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and push (amd64)
+      uses: docker/build-push-action@v3
+      # There is no conditional on linux/amd64 to ensure the manifest list contains
+      # at least one entry (the most commonly used).
+      id: build-amd64
+      with:
+        # This combination of "file:" and "context:" behaves comparably to the GoReleaser
+        # Docker image build (i.e. a fresh context created under "./dist").
+        platforms: linux/amd64
+        file: ./Dockerfile
+        context: ./dist/${{ steps.platforms.outputs.context_amd64_v1 }}
+        build-contexts: ${{ inputs.build-contexts }}
+        tags: ${{ steps.meta.outputs.tags }}-amd64
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha
+        push: true
+    - name: Create manifest (amd64)
+      # There is no conditional, we always run without the "--append" flag.
+      run: |
+        docker buildx imagetools create \
+          --tag ${{ steps.meta.outputs.tags }} \
+          ${{ steps.build-amd64.outputs.digest }}      
+
+    - name: Build and push (arm64)
+      uses: docker/build-push-action@v3
+      if: ${{ steps.platforms.outputs.context_arm64 }}
+      id: build-arm64
+      with:
+        platforms: linux/arm64
+        file: ./Dockerfile
+        context: ./dist/${{ steps.platforms.outputs.context_arm64 }}
+        build-contexts: ${{ inputs.build-contexts }}
+        tags: ${{ steps.meta.outputs.tags }}-arm64
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha
+        push: true
+    - name: Create manifest (arm64)
+      if: ${{ steps.build-arm64.conclusion == 'success' }}
+      run: |
+        docker buildx imagetools create --append \
+          --tag ${{ steps.meta.outputs.tags }} \
+          ${{ steps.build-arm64.outputs.digest }}
+
+    - name: Deploy manifest list
+      env:
+        GH_REPO: gramLabs/stormforge-app
+        GH_TOKEN: ${{ secrets.gh-token }}
+      run: |
+        gh workflow run promote_image_to_dev.yaml -f image="${{ steps.meta.outputs.tags }}"
