@@ -1,0 +1,41 @@
+name: Pull Request
+
+on:
+  workflow_call: {}
+
+jobs:
+
+  # Runs chart-testing over the Helm charts
+  chart-test:
+    name: Helm Chart Testing
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Set up Helm Chart Testing
+      uses: helm/chart-testing-action@v2
+
+    - name: List changed
+      id: list-changed
+      run: |
+        if [[ -n "$(ct list-changed --target-branch $GITHUB_BASE_REF)" ]] ; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Lint
+      run: ct lint --target-branch $GITHUB_BASE_REF
+
+    - name: Create kind cluster
+      uses: helm/kind-action@v1
+      if: steps.list-changed.outputs.changed
+
+    - name: Install
+      run: ct install
