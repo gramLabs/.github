@@ -1,0 +1,55 @@
+name: Deploy Helm Chart
+description: Builds and pushes a Helm chart to GHCR.
+inputs:
+  gh-token:
+    description: PAT used for triggering workflows.
+    required: true
+  registry:
+    description: Registry to push the Helm chart to.
+    required: true
+    default: ghcr.io/${{ github.repository_owner }}
+  chart:
+    description: Name of the chart to build and push.
+    required: true
+  version:
+    description: Version of the chart to build. Can be included as a "/v" suffix on the chart name.
+    required: false
+    default: ''
+  app-version:
+    description: Application version to include in the chart.
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+
+  - uses: docker/login-action@v2
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ github.token }}
+
+  - shell: bash
+    id: helm-chart
+    env:
+      REGISTRY: ${{ inputs.registry }}
+      CHART: ${{ inputs.chart }}
+      VERSION: ${{ inputs.version }}
+      APP_VERSION: ${{ inputs.app-version }}
+    run: |
+      VERSION=${VERSION-${CHART##*/v}}
+      CHART=${CHART%%/v*}
+      REGISTRY=${REGISTRY,,}
+      echo "image=${REGISTRY}/${CHART}:${VERSION}" >> $GITHUB_OUTPUT
+      
+      helm package "./charts/${CHART}" --version "${VERSION}" --app-version "${APP_VERSION}" --destination "./dist"
+      helm push "./dist/${CHART}-${VERSION}.tgz" "oci://${REGISTRY}"
+
+  - shell: bash
+    env:
+      GH_REPO: gramLabs/stormforge-app
+      GH_TOKEN: ${{ secrets.SERVICES_PACKAGE_PAT }}
+    run: |
+      gh workflow run promote_image_to_dev.yaml \
+        -f image="${{ steps.helm-chart.outputs.image }}"
