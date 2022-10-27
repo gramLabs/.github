@@ -38,7 +38,7 @@ runs:
       VERSION: ${{ inputs.version }}
       APP_VERSION: ${{ inputs.app-version }}
     run: |
-      VERSION=${VERSION-${CHART##*/v}}
+      VERSION=${VERSION:-${CHART##*/v}}
       CHART=${CHART%%/v*}
       REGISTRY=${REGISTRY,,}
       echo "image=${REGISTRY}/${CHART}:${VERSION}" >> $GITHUB_OUTPUT
