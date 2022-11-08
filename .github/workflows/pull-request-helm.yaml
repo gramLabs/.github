@@ -39,3 +39,4 @@ jobs:
 
     - name: Install
       run: ct install
+      if: steps.list-changed.outputs.changed
