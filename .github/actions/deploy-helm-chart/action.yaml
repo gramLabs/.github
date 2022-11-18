@@ -12,7 +12,7 @@ inputs:
     description: Name of the chart to build and push.
     required: true
   version:
-    description: Version of the chart to build. Can be included as a "/v" suffix on the chart name.
+    description: Version of the chart to build.
     required: false
     default: ''
   app-version:
@@ -38,13 +38,14 @@ runs:
       VERSION: ${{ inputs.version }}
       APP_VERSION: ${{ inputs.app-version }}
     run: |
-      VERSION=${VERSION:-${CHART##*/v}}
-      CHART=${CHART%%/v*}
       REGISTRY=${REGISTRY,,}
-      echo "image=${REGISTRY}/${CHART}:${VERSION}" >> $GITHUB_OUTPUT
+      if [ -z "${VERSION}" ] ; then
+        VERSION=$(helm show chart "./charts/${CHART}" | grep '^version:' | awk '{print $NF}')
+      fi
       
       helm package "./charts/${CHART}" --version "${VERSION}" --app-version "${APP_VERSION}" --destination "./dist"
       helm push "./dist/${CHART}-${VERSION}.tgz" "oci://${REGISTRY}"
+      echo "image=${REGISTRY}/${CHART}:${VERSION}" >> $GITHUB_OUTPUT
 
   - shell: bash
     env:
