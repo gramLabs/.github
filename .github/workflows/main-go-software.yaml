@@ -71,7 +71,9 @@ jobs:
       # GoReleaser does not supply a '--match' so if you are tagging
       # submodules (e.g. 'foobar/v1.0.0'), it will fail
       run: |
-        GORELEASER_CURRENT_TAG=$(git describe --tags --abbrev=0 --match='v*') >> $GITHUB_ENV
+        CURRENT_TAG=$(git describe --tags --abbrev=0 --match='v*')
+        GORELEASER_CURRENT_TAG=${CURRENT_TAG} >> $GITHUB_ENV
+        GORELEASER_PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match='v*' ${CURRENT_TAG}^) >> $GITHUB_ENV
 
     - name: Run GoReleaser
       id: goreleaser
@@ -96,9 +98,8 @@ jobs:
       # The GoReleaser build creates the platform specific binaries we need. Based
       # on what distributions are available, we will build the corresponding images.
       id: platforms
-      env:
-        PROJECT_NAME: ${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}
       run: |
+        PROJECT_NAME="${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}"
         for p in amd64_v1 arm64 ; do
           dir="${PROJECT_NAME}_linux_${p}"
           [[ -d "dist/${dir}" ]] && echo "context_${p}=${dir}" >> $GITHUB_OUTPUT
