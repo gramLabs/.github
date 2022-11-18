@@ -153,9 +153,10 @@ jobs:
  
     - name: Create manifest
       run: |
+        tags=( ${{ steps.meta.outputs.tags }} )
         digests+=( ${{ steps.build-amd64.outputs.digest }} )
         digests+=( ${{ steps.build-arm64.outputs.digest }} )
-        for tag in ${{ steps.meta.outputs.tags }} ; do
+        for tag in ${tags[@]} ; do
           docker buildx imagetools create --tag ${tag} ${digests[@]}
         done
 
