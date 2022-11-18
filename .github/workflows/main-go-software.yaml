@@ -103,9 +103,10 @@ jobs:
       id: meta
       with:
         images: ghcr.io/${{ github.repository }}
-        # It's important that this only produce a single "tags" output
         flavor: latest=false
-        tags: type=raw,value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
+        tags: |
+          type=semver,pattern={{version}},value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
+          type=edge
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
@@ -119,12 +120,9 @@ jobs:
 
     - name: Build and push (amd64)
       uses: docker/build-push-action@v3
-      # There is no conditional on linux/amd64 to ensure the manifest list contains
-      # at least one entry (the most commonly used).
+      if: ${{ steps.platforms.outputs.context_amd64_v1 }}
       id: build-amd64
       with:
-        # This combination of "file:" and "context:" behaves comparably to the GoReleaser
-        # Docker image build (i.e. a fresh context created under "./dist").
         platforms: linux/amd64
         file: ./Dockerfile
         context: ./dist/${{ steps.platforms.outputs.context_amd64_v1 }}
@@ -134,12 +132,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha
         push: true
-    - name: Create manifest (amd64)
-      # There is no conditional, we always run without the "--append" flag.
-      run: |
-        docker buildx imagetools create \
-          --tag ${{ steps.meta.outputs.tags }} \
-          ${{ steps.build-amd64.outputs.digest }}      
 
     - name: Build and push (arm64)
       uses: docker/build-push-action@v3
@@ -155,16 +147,18 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha
         push: true
-    - name: Create manifest (arm64)
-      if: ${{ steps.build-arm64.conclusion == 'success' }}
+ 
+    - name: Create manifest
       run: |
-        docker buildx imagetools create --append \
-          --tag ${{ steps.meta.outputs.tags }} \
-          ${{ steps.build-arm64.outputs.digest }}
+        digests=()
+        digests+=( ${{ steps.build-amd64.outputs.digest }} )
+        digests+=( ${{ steps.build-arm64.outputs.digest }} )
+        docker buildx imagetools create --tag ${{ steps.meta.outputs.tags }} ${digests[@]}    
 
     - name: Deploy manifest list
       env:
         GH_REPO: gramLabs/stormforge-app
         GH_TOKEN: ${{ secrets.gh-token }}
       run: |
-        gh workflow run promote_image_to_dev.yaml -f image="${{ steps.meta.outputs.tags }}"
+        tags=( ${{ steps.meta.outputs.tags }} )
+        gh workflow run promote_image_to_dev.yaml -f image="${tags}"
