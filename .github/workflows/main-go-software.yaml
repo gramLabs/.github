@@ -149,10 +149,11 @@ jobs:
  
     - name: Create manifest
       run: |
+        tags=( ${{ steps.meta.outputs.tags }} )
         digests=()
         digests+=( ${{ steps.build-amd64.outputs.digest }} )
         digests+=( ${{ steps.build-arm64.outputs.digest }} )
-        docker buildx imagetools create --tag ${{ steps.meta.outputs.tags }} ${digests[@]}    
+        docker buildx imagetools create --tag ${tags} ${digests[@]}    
 
     - name: Deploy manifest list
       env:
