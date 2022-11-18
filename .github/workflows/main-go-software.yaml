@@ -107,7 +107,7 @@ jobs:
           if [[ -d "dist/${dir}" ]] ; then
             p="${p%_v1}"
             echo "context_${p}=${dir}" >> $GITHUB_OUTPUT
-            echo "tags_${p}=${tags[@]/%/-${p}" >> $GITHUB_OUTPUT
+            echo "tags_${p}=${tags[@]/%/-${p}}" >> $GITHUB_OUTPUT
           fi
         done
 
