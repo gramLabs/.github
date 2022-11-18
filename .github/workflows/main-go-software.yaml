@@ -67,6 +67,12 @@ jobs:
       with:
         gh-token: ${{ secrets.gh-token }}
 
+    - name: Override GoReleaser current tag
+      # GoReleaser does not supply a '--match' so if you are tagging
+      # submodules (e.g. 'foobar/v1.0.0'), it will fail
+      run: |
+        GORELEASER_CURRENT_TAG=$(git describe --tags --abbrev=0 --match='v*') >> $GITHUB_ENV
+
     - name: Run GoReleaser
       id: goreleaser
       uses: goreleaser/goreleaser-action@v3
