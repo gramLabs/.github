@@ -15,6 +15,9 @@
 #      - linux
 #      goarch:
 #      - amd64
+#    release:
+#      draft: true
+#      prerelease: auto
 #
 name: Main
 
