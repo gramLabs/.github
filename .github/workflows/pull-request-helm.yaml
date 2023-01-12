@@ -38,5 +38,5 @@ jobs:
       if: steps.list-changed.outputs.changed
 
     - name: Install
-      run: ct install
+      run: ct install --target-branch $GITHUB_BASE_REF
       if: steps.list-changed.outputs.changed
