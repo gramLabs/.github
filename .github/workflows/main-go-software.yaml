@@ -124,7 +124,7 @@ jobs:
       uses: docker/metadata-action@v4
       id: meta
       with:
-        images: ghcr.io/${{ github.repository }}
+        images: ghcr.io/${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}
         flavor: latest=false
         tags: |
           type=semver,pattern={{version}},value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
