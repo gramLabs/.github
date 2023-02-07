@@ -4,10 +4,10 @@
 # of a "software" project (i.e. one that periodically released as opposed to continuously).
 #
 # To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
-# GoReleaser must be configured to build a linux/amd64/v1 binary, e.g.:
+# GoReleaser must be configured to build at least a linux/amd64/v1 binary, e.g.:
 #
 #    before:
-#      hooks: ["go mod tidy", "go generate ./..."]
+#      hooks: ['go mod tidy', 'go generate ./...']
 #    builds:
 #    - env:
 #      - CGO_ENABLED=0
@@ -15,9 +15,15 @@
 #      - linux
 #      goarch:
 #      - amd64
+#      - arm64
+#    snapshot:
+#      name_template: '{{trimprefix .Summary "v"}}'
 #    release:
 #      draft: true
 #      prerelease: auto
+#    archives:
+#    - name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+#      files: ['none*']
 #
 name: Main
 
