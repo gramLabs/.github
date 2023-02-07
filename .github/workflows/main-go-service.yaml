@@ -1,0 +1,119 @@
+# main-go-service.yaml
+#
+# This is the primary shared workflow for building and deploying code on the main branch
+# of a "service" project (i.e. one that is continuously deployed).
+#
+# To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
+# GoReleaser must be configured to ONLY build a single platform (note that you can still
+# use `goreleaser build --single-target` locally), e.g.:
+#
+#    before:
+#      hooks: ['go mod tidy', 'go generate ./...']
+#    builds:
+#    - env:
+#      - CGO_ENABLED=0
+#      targets:
+#      - linux_amd64_v1
+#    archives:
+#    - format: binary
+#    snapshot:
+#      name_template: 'sha-{{.ShortCommit}}'
+#    release:
+#      draft: true
+#      prerelease: auto
+#
+name: Main
+
+on:
+  workflow_call:
+    inputs:
+      build-contexts:
+        description: 'List of additional build contexts (e.g., name=path).'
+        default: ''
+        required: false
+        type: string
+    secrets:
+      gh-token:
+        description: 'PAT used for triggering workflows and pulling Go modules.'
+        required: true
+    outputs:
+      artifacts:
+        description: Build result artifacts.
+        value: ${{ jobs.deploy.outputs.artifacts }}
+      metadata:
+        description: Build result metadata.
+        value: ${{ jobs.deploy.outputs.metadata }}
+      tags:
+        description: Docker tags.
+        value: ${{ jobs.deploy.outputs.tags }}
+
+jobs:
+
+  # Builds and pushes images to GHCR.
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    outputs:
+      artifacts: ${{ steps.goreleaser.outputs.artifacts }}
+      metadata: ${{ steps.goreleaser.outputs.metadata }}
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: gramLabs/.github/.github/actions/setup-go@main
+      with:
+        gh-token: ${{ secrets.gh-token }}
+
+    - name: Run GoReleaser
+      id: goreleaser
+      uses: goreleaser/goreleaser-action@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.gh-token }}
+      with:
+        version: latest
+        args: release
+
+    - name: Docker meta
+      uses: docker/metadata-action@v4
+      id: meta
+      with:
+        images: ghcr.io/${{ github.repository }}
+        flavor: latest=false
+        tags: |
+          type=raw,value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
+          type=edge
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and push
+      uses: docker/build-push-action@v3
+      with:
+        platforms: linux/amd64
+        file: ./Dockerfile
+        context: ./dist/${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}_linux_amd64_v1
+        build-contexts: ${{ inputs.build-contexts }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha
+        push: true
+        provenance: false
+
+    - name: Deploy image
+      env:
+        GH_REPO: gramLabs/stormforge-app
+        GH_TOKEN: ${{ secrets.gh-token }}
+      run: |
+        tags=( ${{ steps.meta.outputs.tags }} )
+        gh workflow run promote_image_to_dev.yaml -f image="${tags}"
