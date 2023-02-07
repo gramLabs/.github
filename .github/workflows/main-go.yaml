@@ -1,3 +1,5 @@
+# NOTE: This is the old workflow, you should migrate to either main-go-library, main-go-service, or main-go-software.
+
 name: Main
 
 on:

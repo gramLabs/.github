@@ -1,7 +1,7 @@
 # main-go-library.yaml
 #
 # This is the primary shared workflow for building and deploying code on the main branch
-# of a "library" project (i.e. one that periodically released with no distribution).
+# of a "library" project (i.e. one that is periodically released with no distribution).
 #
 # To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
 # GoReleaser must be configured to skip builds, e.g.:
