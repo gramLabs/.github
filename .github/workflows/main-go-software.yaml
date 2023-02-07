@@ -144,6 +144,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha
         push: true
+        provenance: false
 
     - name: Build and push (arm64)
       uses: docker/build-push-action@v3
