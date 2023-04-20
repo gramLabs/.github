@@ -5,6 +5,18 @@ updates:
   schedule:
     interval: "daily"
 - package-ecosystem: "github-actions"
-  directory: "/.github/actions/*"
+  directory: "/.github/actions/build-push"
+  schedule:
+    interval: "daily"
+- package-ecosystem: "github-actions"
+  directory: "/.github/actions/deploy-helm-chart"
+  schedule:
+    interval: "daily"
+- package-ecosystem: "github-actions"
+  directory: "/.github/actions/setup-go"
+  schedule:
+    interval: "daily"
+- package-ecosystem: "github-actions"
+  directory: "/.github/actions/setup-python"
   schedule:
     interval: "daily"
