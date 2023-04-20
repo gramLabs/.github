@@ -10,10 +10,9 @@ runs:
   using: "composite"
   steps:
 
-  - uses: actions/setup-go@v3
+  - uses: actions/setup-go@v4
     with:
       go-version-file: 'go.mod'
-      cache: true
 
   - id: go-env
     shell: bash
