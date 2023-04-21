@@ -61,4 +61,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
       with:
         version: latest
-        args: release --release-notes ./.github/RELEASE_TEMPLATE.md
+        args: release ${{ env.GORELEASER_FLAGS }}

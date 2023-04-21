@@ -74,7 +74,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
       with:
         version: latest
-        args: release
+        args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Docker meta
       uses: docker/metadata-action@v4

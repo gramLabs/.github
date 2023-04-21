@@ -95,7 +95,7 @@ jobs:
         HOMEBREW_TAP_GITHUB_TOKEN: '${{ secrets.homebrew-token }}'
       with:
         version: latest
-        args: release
+        args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
