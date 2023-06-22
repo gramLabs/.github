@@ -8,6 +8,10 @@ inputs:
     description: 'The development cluster to target.'
     default: 'dev-1'
     required: false
+  build-args:
+    description: 'Build arguments for the image'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -37,6 +41,7 @@ runs:
       labels: ${{ steps.meta.outputs.labels }}
       cache-from: type=gha
       cache-to: type=gha
+      build-args: ${{ inputs.build-args }}
 
   - shell: bash
     env:
