@@ -1,7 +1,13 @@
 name: Pull Request
 
 on:
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      check-version-increment:
+        description: "If true (default), `ct lint` will check for chart version increment"
+        default: true
+        required: false
+        type: boolean
 
 jobs:
 
@@ -31,7 +37,7 @@ jobs:
         fi
 
     - name: Lint
-      run: ct lint --target-branch $GITHUB_BASE_REF
+      run: ct lint --check-version-increment=${{ inputs.check-version-increment }} --target-branch $GITHUB_BASE_REF
 
     - name: Create kind cluster
       uses: helm/kind-action@v1
