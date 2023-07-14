@@ -1,7 +1,19 @@
 name: Pull Request
 
 on:
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      check-version-increment:
+        description: "If true (default), `ct lint` will check for chart version increment"
+        default: true
+        required: false
+        type: boolean
+      check-install:
+        description: "If true (default), install the chart on a Kind cluster and verify successful deployment"
+        default: true
+        required: false
+        type: boolean
+
 
 jobs:
 
@@ -31,12 +43,12 @@ jobs:
         fi
 
     - name: Lint
-      run: ct lint --target-branch $GITHUB_BASE_REF
+      run: ct lint --check-version-increment=${{ inputs.check-version-increment }} --target-branch $GITHUB_BASE_REF
 
     - name: Create kind cluster
       uses: helm/kind-action@v1
-      if: steps.list-changed.outputs.changed
+      if: ${{ inputs.check-install == 'true' && steps.list-changed.outputs.changed == 'true' }}
 
     - name: Install
       run: ct install --target-branch $GITHUB_BASE_REF
-      if: steps.list-changed.outputs.changed
+      if: ${{ inputs.check-install == 'true' && steps.list-changed.outputs.changed == 'true' }}
