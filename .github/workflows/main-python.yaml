@@ -3,6 +3,11 @@ name: Main
 on:
   workflow_call:
     inputs:
+      build-args:
+        description: 'Build arguments for the image'
+        required: false
+        default: ''
+        type: string
       cluster:
         description: 'The development cluster to target.'
         default: 'dev-1'
@@ -26,5 +31,6 @@ jobs:
     - name: Build and Push
       uses: gramLabs/.github/.github/actions/build-push@main
       with:
+        build-args: '${{ inputs.build-args }}'
         cluster: '${{ inputs.cluster }}'
         gh-token: '${{ secrets.gh-token }}'
