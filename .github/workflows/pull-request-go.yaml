@@ -18,17 +18,24 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Set up Go
-      uses: gramLabs/.github/.github/actions/setup-go@main
+      uses: actions/setup-go@v4
       with:
-        gh-token: '${{ secrets.gh-token }}'
+        go-version-file: 'go.mod'
+        cache: false
+    
+    - name: Go Env
+      run: |
+        if [ -n "${{ secrets.gh-token }}" ]; then
+          git config --global http.https://github.com/gramLabs/.extraheader \
+            "AUTHORIZATION: basic $(echo -n "x-access-token:${{ secrets.gh-token }}" | base64 -w 0)"
+        fi
+        go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}"
 
     - name: Lint
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
-        args: -E goimports,stylecheck --timeout 3m
-        skip-pkg-cache: true
-        skip-build-cache: true
+        args: -E goimports,stylecheck
 
   # Runs the build to ensure nothing is overtly broken.
   build:
