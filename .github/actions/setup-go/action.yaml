@@ -20,11 +20,10 @@ runs:
       ACCESS_TOKEN: '${{ inputs.gh-token }}'
     run: |
       if [ -n "${ACCESS_TOKEN}" ]; then
-        git config --global http.https://github.com/.emptyAuth true
-        git config --global http.https://github.com/.extraheader \
+        git config --global http.https://github.com/${{ github.repository_owner }}/.extraheader \
             "AUTHORIZATION: basic $(echo -n "x-access-token:${ACCESS_TOKEN}" | base64 -w 0)"
       fi
-      go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}"
+      go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}/*"
 
   - id: goreleaser-env
     shell: bash
