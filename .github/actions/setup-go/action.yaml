@@ -19,6 +19,7 @@ runs:
     env:
       ACCESS_TOKEN: '${{ inputs.gh-token }}'
     run: |
+      git config --global --list
       if [ -n "${ACCESS_TOKEN}" ]; then
       	cat <<-EOF > ~/.netrc
       	machine github.com
