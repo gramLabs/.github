@@ -20,7 +20,7 @@ runs:
       ACCESS_TOKEN: '${{ inputs.gh-token }}'
     run: |
       if [ -n "${ACCESS_TOKEN}" ]; then
-      	git config --global http.https://github.com/${{ github.repository_owner }}/.extraheader \
+      	git config --local http.https://github.com/.extraheader \
       		"AUTHORIZATION: basic $(echo -n "x-access-token:${ACCESS_TOKEN}" | base64 -w 0)"
       fi
       go env -w "GOPRIVATE=github.com/${{ github.repository_owner }}/*"
