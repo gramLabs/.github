@@ -8,11 +8,6 @@ on:
         required: false
         default: ''
         type: string
-      cluster:
-        description: 'The development cluster to target.'
-        default: 'dev-1'
-        required: false
-        type: string
     secrets:
       gh-token:
         description: 'PAT used for pushing GHCR images.'
@@ -32,5 +27,4 @@ jobs:
       uses: gramLabs/.github/.github/actions/build-push@main
       with:
         build-args: '${{ inputs.build-args }}'
-        cluster: '${{ inputs.cluster }}'
         gh-token: '${{ secrets.gh-token }}'

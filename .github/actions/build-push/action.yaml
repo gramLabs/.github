@@ -4,10 +4,6 @@ inputs:
   gh-token:
     description: 'PAT used for triggering workflows.'
     required: true
-  cluster:
-    description: 'The development cluster to target.'
-    default: 'dev-1'
-    required: false
   build-args:
     description: 'Build arguments for the image'
     required: false
