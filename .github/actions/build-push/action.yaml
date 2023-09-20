@@ -49,5 +49,4 @@ runs:
       GH_TOKEN: ${{ inputs.gh-token }}
     run: |
       gh workflow run promote_image_to_dev.yaml \
-        -f image="${{ steps.meta.outputs.tags }}" \
-        -f cluster="${{ inputs.cluster }}"
+        -f image="${{ steps.meta.outputs.tags }}"
