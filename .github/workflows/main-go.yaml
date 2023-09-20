@@ -113,6 +113,5 @@ jobs:
         GH_TOKEN: ${{ secrets.gh-token }}
       run: |
         gh workflow run promote_image_to_dev.yaml \
-          -f image="ghcr.io/${{ github.repository }}:${{ fromJson(steps.goreleaser.outputs.metadata).version }}" \
-          -f cluster="${{ inputs.cluster }}"
+          -f image="ghcr.io/${{ github.repository }}:${{ fromJson(steps.goreleaser.outputs.metadata).version }}"
 
