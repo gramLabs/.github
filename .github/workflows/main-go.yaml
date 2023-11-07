@@ -62,7 +62,7 @@ jobs:
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         install: true
         # Pin buildkit to prevent SBOM generation that breaks ECR
