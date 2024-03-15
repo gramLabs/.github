@@ -52,4 +52,4 @@ runs:
       GH_REPO: gramLabs/stormforge-app
       GH_TOKEN: ${{ inputs.gh-token }}
     run: |
-      gh workflow run promote_image.yaml -f image="${{ steps.helm-chart.outputs.image }}"
+      gh workflow run promote_image.yaml -f image="${{ steps.helm-chart.outputs.image }}" -f ref_name="${{ github.ref_name }}"
