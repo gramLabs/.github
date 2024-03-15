@@ -202,4 +202,4 @@ jobs:
         GH_TOKEN: ${{ secrets.gh-token }}
       run: |
         tags=( ${{ steps.meta.outputs.tags }} )
-        gh workflow run promote_image.yaml -f image="${tags}"
+        gh workflow run promote_image.yaml -f image="${tags}" -f ref_name="${{ github.ref_name }}"
