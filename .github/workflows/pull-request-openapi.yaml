@@ -1,0 +1,24 @@
+name: Pull Request
+
+on:
+  workflow_call:
+    secrets:
+      gh-token:
+        description: 'PAT used for pulling Go modules.'
+        required: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up node
+      uses: actions/setup-node@v4
+      with:
+        cache: npm
+
+    - name: Lint
+      run: find . -name openapi.yaml -exec npx @redocly/cli lint {} \;
