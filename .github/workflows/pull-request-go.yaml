@@ -47,7 +47,7 @@ jobs:
       uses: goreleaser/goreleaser-action@v5
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
       with:
-        version: latest
+        version: v1
         args: build --single-target --snapshot
 
     - name: Run Go build
