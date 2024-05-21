@@ -108,7 +108,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
         HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.homebrew-token }}
       with:
-        version: latest
+        version: v1
         args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Upload Artifacts

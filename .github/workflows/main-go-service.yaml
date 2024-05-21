@@ -73,7 +73,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
       with:
-        version: latest
+        version: v1
         args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Docker meta
