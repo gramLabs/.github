@@ -29,8 +29,6 @@ runs:
       tags: type=sha
 
   - uses: docker/build-push-action@v6
-    env:
-      DOCKER_BUILD_SUMMARY: "false"
     with:
       context: .
       push: true
