@@ -7,6 +7,7 @@
 # GoReleaser must be configured to ONLY build a single platform (note that you can still
 # use `goreleaser build --single-target` locally), e.g.:
 #
+#    version: 2
 #    before:
 #      hooks: ['go mod tidy', 'go generate ./...']
 #    builds:
@@ -15,9 +16,9 @@
 #      targets:
 #      - linux_amd64_v1
 #    archives:
-#    - format: binary
+#    - formats: ['binary']
 #    snapshot:
-#      name_template: 'sha-{{.ShortCommit}}'
+#      version_template: 'sha-{{ .ShortCommit }}'
 #    release:
 #      draft: true
 #      prerelease: auto
@@ -69,11 +70,10 @@ jobs:
 
     - name: Run GoReleaser
       id: goreleaser
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v6
       env:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
       with:
-        version: v1
         args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Docker meta
