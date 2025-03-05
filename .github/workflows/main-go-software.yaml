@@ -9,6 +9,7 @@
 #
 # For a project which is distributed primarily as a container image:
 #
+#    version: v2
 #    before:
 #      hooks: ['go mod tidy', 'go generate ./...']
 #    builds:
@@ -20,15 +21,16 @@
 #      - amd64
 #      - arm64
 #    archives:
-#    - format: binary
+#    - formats: ['binary']
 #    snapshot:
-#      name_template: '{{trimprefix .Summary "v"}}'
+#      version_template: '{{ trimprefix .Summary "v" }}'
 #    release:
 #      draft: true
 #      prerelease: auto
 #
 # For a project which is distributed primarily as a binary:
 #
+#    version: v2
 #    before:
 #      hooks: ['go mod tidy', 'go generate ./...']
 #    builds:
@@ -45,7 +47,7 @@
 #    - name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 #      files: ['none*']
 #    snapshot:
-#      name_template: '{{trimprefix .Summary "v"}}'
+#      version_template: '{{ trimprefix .Summary "v" }}'
 #    release:
 #      draft: true
 #      prerelease: auto
@@ -103,12 +105,11 @@ jobs:
 
     - name: Run GoReleaser
       id: goreleaser
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v6
       env:
         GITHUB_TOKEN: ${{ secrets.gh-token }}
         HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.homebrew-token }}
       with:
-        version: v1
         args: release ${{ env.GORELEASER_FLAGS }}
 
     - name: Upload Artifacts

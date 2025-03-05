@@ -6,12 +6,13 @@
 # To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
 # GoReleaser must be configured to skip builds, e.g.:
 #
+#    version: v2
 #    before:
-#      hooks: ["go mod tidy", "go generate ./..."]
+#      hooks: ['go mod tidy', 'go generate ./...']
 #    builds:
 #    - skip: true
 #    snapshot:
-#      name_template: '{{trimprefix .Summary "v"}}'
+#      version_template: '{{ trimprefix .Summary "v" }}'
 #    release:
 #      draft: true
 #      prerelease: auto
