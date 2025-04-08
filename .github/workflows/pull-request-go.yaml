@@ -23,7 +23,7 @@ jobs:
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Lint
-      uses: golangci/golangci-lint-action@v7
+      uses: golangci/golangci-lint-action@v6
       with:
         version: v1.64
         args: -E goimports,stylecheck --timeout 10m
