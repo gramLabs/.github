@@ -25,7 +25,7 @@ jobs:
     - name: Lint
       uses: golangci/golangci-lint-action@v7
       with:
-        version: latest
+        version: v1.64
         args: -E goimports,stylecheck --timeout 10m
 
   # Runs the build to ensure nothing is overtly broken.
