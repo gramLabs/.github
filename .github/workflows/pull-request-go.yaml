@@ -22,11 +22,32 @@ jobs:
       with:
         gh-token: '${{ secrets.gh-token }}'
 
+    - name: Configure Linter
+      run: |
+        cat << EOF > "${{ runner.temp }}/.golangci.yaml"
+        version: "2"
+        linters:
+          default: none
+          enable:
+          - staticcheck
+          settings:
+            staticcheck:
+              checks:
+              - ST*
+              - -ST1000
+              - -ST1020
+              - -ST1021
+              - -ST1022
+        formatters:
+          enable:
+          - gofmt
+          - goimports
+        EOF
+
     - name: Lint
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v7
       with:
-        version: v1.64
-        args: -E goimports,stylecheck --timeout 10m
+        args: '--config="${{ runner.temp }}/.golangci.yaml"'
 
   # Runs the build to ensure nothing is overtly broken.
   build:
