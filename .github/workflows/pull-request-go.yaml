@@ -72,7 +72,10 @@ jobs:
 
     - name: Run Go build
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
-      run: go build ./...
+      run: |
+        go mod tidy
+        go generate ./...
+        go build ./...
 
   # Runs the short Go tests, callers may define additional jobs for more in-depth
   # acceptance testing on pull requests if necessary.
