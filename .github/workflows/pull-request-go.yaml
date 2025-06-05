@@ -2,6 +2,12 @@ name: Pull Request
 
 on:
   workflow_call:
+    inputs:
+      short-tests:
+        description: 'Only run short tests.'
+        default: true
+        required: false
+        type: boolean
     secrets:
       gh-token:
         description: 'PAT used for pulling Go modules.'
@@ -77,10 +83,10 @@ jobs:
         go generate ./...
         go build ./...
 
-  # Runs the short Go tests, callers may define additional jobs for more in-depth
+  # Runs the Go tests, callers may define additional jobs for more in-depth
   # acceptance testing on pull requests if necessary.
   test:
-    name: Short Tests
+    name: Test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -91,5 +97,10 @@ jobs:
       with:
         gh-token: '${{ secrets.gh-token }}'
 
-    - name: Test
-      run: go test -short ./...
+    - name: Run Short Tests
+      if: 'inputs.short-tests'
+      run: 'go test -short ./...'
+
+    - name: Run Tests
+      if: '!inputs.short-tests'
+      run: 'go test ./...'
