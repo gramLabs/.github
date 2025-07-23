@@ -42,6 +42,8 @@ jobs:
           enable:
           - gofmt
           - goimports
+        run:
+          timeout: 10m
         EOF
 
     - name: Lint
