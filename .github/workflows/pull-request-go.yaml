@@ -2,6 +2,12 @@ name: Pull Request
 
 on:
   workflow_call:
+    inputs:
+      short-tests:
+        description: 'Limit Go Test to only running short tests.'
+        default: true
+        required: false
+        type: boolean
     secrets:
       gh-token:
         description: 'PAT used for pulling Go modules.'
@@ -9,7 +15,6 @@ on:
 
 jobs:
 
-  # Runs the linter with a minimal set of default rules.
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -46,12 +51,11 @@ jobs:
           timeout: 10m
         EOF
 
-    - name: Lint
+    - name: Run Linter
       uses: golangci/golangci-lint-action@v8
       with:
         args: '--config="${{ runner.temp }}/.golangci.yaml"'
 
-  # Runs the build to ensure nothing is overtly broken.
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -72,12 +76,14 @@ jobs:
 
     - name: Run Go build
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
-      run: go build ./...
+      run: |
+        go mod tidy
+        go generate ./...
+        go build ./...
 
-  # Runs the short Go tests, callers may define additional jobs for more in-depth
-  # acceptance testing on pull requests if necessary.
+  # Callers may define additional jobs for more in-depth acceptance testing on pull requests if necessary
   test:
-    name: Short Tests
+    name: Test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -88,5 +94,12 @@ jobs:
       with:
         gh-token: '${{ secrets.gh-token }}'
 
-    - name: Test
-      run: go test -short ./...
+    - name: Run Short Tests
+      if: 'inputs.short-tests'
+      run: |
+        go test -short ./...
+
+    - name: Run Tests
+      if: '!inputs.short-tests'
+      run: |
+        go test ./...
