@@ -4,14 +4,13 @@ on:
   workflow_call:
     inputs:
       python-version:
-        description: 'The Python version to download (if necessary) and use.'
+        description: 'The Python version to use.'
         default: '3.10'
         required: false
         type: string
 
 jobs:
 
-  # Build is a single job to lint and test
   build:
     name: Build
     runs-on: ubuntu-latest

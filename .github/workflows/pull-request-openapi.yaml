@@ -1,13 +1,9 @@
 name: Pull Request
 
-on:
-  workflow_call:
-    secrets:
-      gh-token:
-        description: 'PAT used for pulling Go modules.'
-        required: false
+on: workflow_call
 
 jobs:
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -18,9 +14,10 @@ jobs:
     - name: Set up node
       uses: actions/setup-node@v4
       with:
+        # Configure the cache to key off an existing file that exists for projects without a package lock file
         cache: npm
-        # Go projects won't have a package lock, we need something else that exists to key off
         cache-dependency-path: '.github/workflows/pull-request.yaml'
 
-    - name: Lint
-      run: find . -name openapi.yaml -exec npx @redocly/cli lint {} \;
+    - name: Run Linter
+      run: |
+        find . -name openapi.yaml -exec npx @redocly/cli lint {} \;

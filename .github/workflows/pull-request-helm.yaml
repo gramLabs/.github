@@ -4,20 +4,18 @@ on:
   workflow_call:
     inputs:
       check-version-increment:
-        description: "If true (default), `ct lint` will check for chart version increment"
+        description: "Enable or disable the check for a mandatory version change."
         default: true
         required: false
         type: boolean
       check-install:
-        description: "If true (default), install the chart on a Kind cluster and verify successful deployment"
+        description: "Enable or disable installing the chart on a temporary cluster."
         default: true
         required: false
         type: boolean
 
-
 jobs:
 
-  # Runs chart-testing over the Helm charts
   chart-test:
     name: Helm Chart Testing
     runs-on: ubuntu-latest
@@ -35,15 +33,16 @@ jobs:
     - name: Set up Helm Chart Testing
       uses: helm/chart-testing-action@v2
 
+    - name: Run Linter
+      run: |
+        ct lint --check-version-increment=${{ inputs.check-version-increment }} --target-branch $GITHUB_BASE_REF
+
     - name: List changed
       id: list-changed
       run: |
         if [[ -n "$(ct list-changed --target-branch $GITHUB_BASE_REF)" ]] ; then
           echo "changed=true" >> $GITHUB_OUTPUT
         fi
-
-    - name: Lint
-      run: ct lint --check-version-increment=${{ inputs.check-version-increment }} --target-branch $GITHUB_BASE_REF
 
     - name: Create kind cluster
       uses: helm/kind-action@v1
