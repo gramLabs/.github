@@ -38,12 +38,6 @@ on:
         description: 'PAT used for triggering workflows and pulling Go modules.'
         required: true
     outputs:
-      artifacts:
-        description: Build result artifacts.
-        value: ${{ jobs.deploy.outputs.artifacts }}
-      metadata:
-        description: Build result metadata.
-        value: ${{ jobs.deploy.outputs.metadata }}
       tags:
         description: Docker tags.
         value: ${{ jobs.deploy.outputs.tags }}
@@ -55,8 +49,6 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     outputs:
-      artifacts: ${{ steps.goreleaser.outputs.artifacts }}
-      metadata: ${{ steps.goreleaser.outputs.metadata }}
       tags: ${{ steps.meta.outputs.tags }}
     steps:
 
