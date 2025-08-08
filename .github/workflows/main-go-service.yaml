@@ -3,26 +3,6 @@
 # This is the primary shared workflow for building and deploying code on the main branch
 # of a "service" project (i.e. one that is continuously deployed).
 #
-# To use this project, you must add a 'goreleaser.yaml' file to the root of repository.
-# GoReleaser must be configured to ONLY build a single platform (note that you can still
-# use `goreleaser build --single-target` locally), e.g.:
-#
-#    version: 2
-#    before:
-#      hooks: ['go mod tidy', 'go generate ./...']
-#    builds:
-#    - env:
-#      - CGO_ENABLED=0
-#      targets:
-#      - linux_amd64_v1
-#    archives:
-#    - formats: ['binary']
-#    snapshot:
-#      version_template: 'sha-{{ .ShortCommit }}'
-#    release:
-#      draft: true
-#      prerelease: auto
-#
 name: Main
 
 on:
@@ -37,10 +17,6 @@ on:
       gh-token:
         description: 'PAT used for triggering workflows and pulling Go modules.'
         required: true
-    outputs:
-      tags:
-        description: Docker tags.
-        value: ${{ jobs.deploy.outputs.tags }}
 
 jobs:
 
@@ -48,8 +24,6 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    outputs:
-      tags: ${{ steps.docker-meta.outputs.tags }}
     steps:
 
     - name: Checkout
@@ -63,13 +37,21 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Run GoReleaser
-      id: goreleaser
-      uses: goreleaser/goreleaser-action@v6
-      env:
-        GITHUB_TOKEN: ${{ secrets.gh-token }}
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
       with:
-        args: release ${{ env.GORELEASER_FLAGS }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Project meta
+      id: project-meta
+      run: |
+        echo "name=$(basename ${PWD})" >> $GITHUB_OUTPUT
+        echo "dist_dir=./dist/$(basename ${PWD})_linux_amd64_v1" >> $GITHUB_OUTPUT
+        echo "version=sha-$(git show --quiet --format=%h)" >> $GITHUB_OUTPUT
+        echo "commit=$(git show --quiet --format=%H)" >> $GITHUB_OUTPUT
+        echo "date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
 
     - name: Docker meta
       uses: docker/metadata-action@v5
@@ -78,22 +60,39 @@ jobs:
         images: ghcr.io/${{ github.repository }}
         flavor: latest=false
         tags: |
-          type=raw,priority=1100,value=${{ fromJson(steps.goreleaser.outputs.metadata).version }}
+          type=raw,priority=1100,value=${{ steps.project-meta.outputs.version }}
           type=edge
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
+    - name: Run GoReleaser
+      id: goreleaser
+      uses: goreleaser/goreleaser-action@v6
+      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
+      env:
+        GITHUB_TOKEN: ${{ secrets.gh-token }}
       with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
+        args: release ${{ env.GORELEASER_FLAGS }}
+
+    - name: Run Go build
+      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
+      env:
+        CGO_ENABLED: "0"
+        GOOS: "linux"
+        GOARCH: "amd64"
+        GOAMD64: "v1"
+      run: |
+        go mod tidy
+        go generate ./...
+        go build \
+          -o "${{ steps.project-meta.outputs.dist_dir }}/${{ steps.project-meta.outputs.name }}" \
+          -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
+          ./...
 
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         platforms: linux/amd64
         file: ./Dockerfile
-        context: ./dist/${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}_linux_amd64_v1
+        context: ${{ steps.project-meta.outputs.dist_dir }}
         tags: ${{ steps.docker-meta.outputs.tags }}
         labels: ${{ steps.docker-meta.outputs.labels }}
         build-contexts: ${{ inputs.build-contexts }}
