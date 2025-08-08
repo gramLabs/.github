@@ -85,7 +85,7 @@ jobs:
         go build \
           -o "${{ steps.project-meta.outputs.dist_dir }}/${{ steps.project-meta.outputs.name }}" \
           -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
-          ./...
+          .
 
     - name: Build and push
       uses: docker/build-push-action@v6
