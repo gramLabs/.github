@@ -80,12 +80,20 @@ jobs:
         GOARCH: "amd64"
         GOAMD64: "v1"
       run: |
+        echo "::group::go mod tidy"
         go mod tidy
+        echo "::endgroup::"
+        
+        echo "::group::go generate ./..."
         go generate ./...
+        echo "::endgroup::"
+        
+        echo "::group::go build ."
         go build \
-          -o "${{ steps.project-meta.outputs.dist_dir }}/${{ steps.project-meta.outputs.name }}" \
           -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
+          -o "${{ steps.project-meta.outputs.dist_dir }}/${{ steps.project-meta.outputs.name }}" \
           .
+        echo "::endgroup::"
 
     - name: Build and push
       uses: docker/build-push-action@v6
