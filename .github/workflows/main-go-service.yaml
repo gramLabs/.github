@@ -49,7 +49,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     outputs:
-      tags: ${{ steps.meta.outputs.tags }}
+      tags: ${{ steps.docker-meta.outputs.tags }}
     steps:
 
     - name: Checkout
@@ -59,6 +59,9 @@ jobs:
       uses: gramLabs/.github/.github/actions/setup-go@main
       with:
         gh-token: ${{ secrets.gh-token }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Run GoReleaser
       id: goreleaser
@@ -70,7 +73,7 @@ jobs:
 
     - name: Docker meta
       uses: docker/metadata-action@v5
-      id: meta
+      id: docker-meta
       with:
         images: ghcr.io/${{ github.repository }}
         flavor: latest=false
@@ -85,18 +88,15 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         platforms: linux/amd64
         file: ./Dockerfile
         context: ./dist/${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}_linux_amd64_v1
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
         build-contexts: ${{ inputs.build-contexts }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha
         push: true
@@ -107,5 +107,5 @@ jobs:
         GH_REPO: gramLabs/stormforge-app
         GH_TOKEN: ${{ secrets.gh-token }}
       run: |
-        tags=( ${{ steps.meta.outputs.tags }} )
+        tags=( ${{ steps.docker-meta.outputs.tags }} )
         gh workflow run promote_image.yaml -f image="${tags}" -f ref_name="${{ github.ref_name }}"
