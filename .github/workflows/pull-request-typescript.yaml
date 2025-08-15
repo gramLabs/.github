@@ -1,0 +1,28 @@
+name: Pull Request
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'The Node.js version to use.'
+        default: '22'
+        required: false
+        type: string
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up Node.js
+      uses: gramLabs/.github/.github/actions/setup-node@main
+      with:
+        node-version: '${{ inputs.node-version}}'
+
+    - name: Validate
+      run: |
+        npm run validate
