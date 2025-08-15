@@ -1,0 +1,30 @@
+name: Main
+
+on:
+  workflow_call:
+    inputs:
+      build-args:
+        description: 'Build arguments for the image'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      gh-token:
+        description: 'PAT used for pushing GHCR images.'
+        required: true
+
+jobs:
+
+  # Builds and pushes images to GHCR.
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Build and Push
+      uses: gramLabs/.github/.github/actions/build-push@main
+      with:
+        build-args: '${{ inputs.build-args }}'
+        gh-token: '${{ secrets.gh-token }}'
