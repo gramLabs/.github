@@ -63,17 +63,7 @@ jobs:
           type=raw,priority=1100,value=${{ steps.project-meta.outputs.version }}
           type=edge
 
-    - name: Run GoReleaser
-      id: goreleaser
-      uses: goreleaser/goreleaser-action@v6
-      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
-      env:
-        GITHUB_TOKEN: ${{ secrets.gh-token }}
-      with:
-        args: release ${{ env.GORELEASER_FLAGS }}
-
     - name: Run Go build
-      if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') == ''
       env:
         CGO_ENABLED: "0"
         GOOS: "linux"
