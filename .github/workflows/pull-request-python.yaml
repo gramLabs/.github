@@ -28,6 +28,11 @@ on:
         default: 'uv.lock'
         required: false
         type: string
+      uv-groups:
+        description: 'Space-separated dependency groups to install when using uv.'
+        default: ''
+        required: false
+        type: string
 
 jobs:
 
@@ -46,6 +51,7 @@ jobs:
         cache: '${{ inputs.cache }}'
         install-command: '${{ inputs.install-command }}'
         uv-cache-dependency-glob: '${{ inputs.uv-cache-dependency-glob }}'
+        uv-groups: '${{ inputs.uv-groups }}'
 
     - name: Lint with pylint
       run: |
