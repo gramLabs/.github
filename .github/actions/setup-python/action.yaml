@@ -5,6 +5,22 @@ inputs:
     description: 'The Python version to download (if necessary) and use.'
     default: '3.10'
     required: false
+  package-manager:
+    description: 'Package manager to use (pip or uv).'
+    default: 'pip'
+    required: false
+  cache:
+    description: 'Cache to use with actions/setup-python (pip or empty).'
+    default: 'pip'
+    required: false
+  install-command:
+    description: 'Override dependency install command.'
+    default: ''
+    required: false
+  uv-cache-dependency-glob:
+    description: 'Glob used to invalidate the uv cache.'
+    default: 'uv.lock'
+    required: false
 
 runs:
   using: "composite"
@@ -13,10 +29,28 @@ runs:
   - uses: actions/setup-python@v6
     with:
       python-version: '${{ inputs.python-version }}'
-      cache: 'pip'
+      cache: '${{ inputs.cache }}'
+
+  - uses: astral-sh/setup-uv@v7
+    if: ${{ inputs.package-manager == 'uv' }}
+    with:
+      enable-cache: true
+      cache-dependency-glob: '${{ inputs.uv-cache-dependency-glob }}'
 
   - shell: bash
+    if: ${{ inputs.install-command != '' }}
+    run: ${{ inputs.install-command }}
+
+  - shell: bash
+    if: ${{ inputs.install-command == '' && inputs.package-manager == 'pip' }}
     run: |
       python -m pip install --upgrade pip setuptools wheel
       pip install -r requirements.txt
       python setup.py develop
+
+  - shell: bash
+    if: ${{ inputs.install-command == '' && inputs.package-manager == 'uv' }}
+    env:
+      UV_SYSTEM_PYTHON: "1"
+    run: |
+      uv sync --frozen
