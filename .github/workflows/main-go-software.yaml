@@ -161,6 +161,8 @@ jobs:
       uses: docker/build-push-action@v6
       if: ${{ steps.platforms.outputs.context_amd64 }}
       id: build-amd64
+      env:
+        DOCKER_BUILD_SUMMARY: "false"
       with:
         platforms: linux/amd64
         file: ./Dockerfile
@@ -177,6 +179,8 @@ jobs:
       uses: docker/build-push-action@v6
       if: ${{ steps.platforms.outputs.context_arm64 }}
       id: build-arm64
+      env:
+        DOCKER_BUILD_SUMMARY: "false"
       with:
         platforms: linux/arm64
         file: ./Dockerfile
