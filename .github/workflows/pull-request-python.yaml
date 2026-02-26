@@ -28,9 +28,9 @@ on:
         default: 'uv.lock'
         required: false
         type: string
-      uv-groups:
-        description: 'Space-separated dependency groups to install when using uv.'
-        default: ''
+      additional-sync-args:
+        description: 'Extra args appended to uv sync (e.g. "--group dev --group test").'
+        default: '--group dev --group test'
         required: false
         type: string
 
@@ -51,7 +51,7 @@ jobs:
         cache: '${{ inputs.cache }}'
         install-command: '${{ inputs.install-command }}'
         uv-cache-dependency-glob: '${{ inputs.uv-cache-dependency-glob }}'
-        uv-groups: '${{ inputs.uv-groups }}'
+        additional-sync-args: '${{ inputs.additional-sync-args }}'
 
     - name: Lint with pylint
       run: |

@@ -21,8 +21,8 @@ inputs:
     description: 'Glob used to invalidate the uv cache.'
     default: 'uv.lock'
     required: false
-  uv-groups:
-    description: 'Space-separated dependency groups to install when using uv (e.g. "dev test").'
+  additional-sync-args:
+    description: 'Extra args appended to uv sync (e.g. "--group dev --group test").'
     default: ''
     required: false
 
@@ -57,10 +57,4 @@ runs:
     env:
       UV_SYSTEM_PYTHON: "1"
     run: |
-      groups_args=()
-      if [ -n "${{ inputs.uv-groups }}" ]; then
-        for group in ${{ inputs.uv-groups }}; do
-          groups_args+=("--group" "$group")
-        done
-      fi
-      uv sync --frozen "${groups_args[@]}"
+      uv sync --frozen ${{ inputs.additional-sync-args }}
