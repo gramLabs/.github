@@ -69,7 +69,7 @@ jobs:
         gh-token: '${{ secrets.gh-token }}'
 
     - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v6
+      uses: goreleaser/goreleaser-action@v7
       if: hashFiles('.goreleaser.yml', '.goreleaser.yaml', 'goreleaser.yml', 'goreleaser.yaml') != ''
       with:
         args: build --single-target --snapshot
