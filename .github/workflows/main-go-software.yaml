@@ -122,7 +122,7 @@ jobs:
           dist/*.zip
 
     - name: Docker meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       id: meta
       with:
         images: ghcr.io/gramlabs/${{ fromJson(steps.goreleaser.outputs.metadata).project_name }}
