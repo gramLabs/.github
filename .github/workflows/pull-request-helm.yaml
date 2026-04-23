@@ -13,6 +13,19 @@ on:
         default: true
         required: false
         type: boolean
+      run-unit-tests:
+        description: "Enable or disable running helm unittest on changed charts."
+        default: true
+        required: false
+        type: boolean
+      schema-reject-values-file:
+        description: |
+          Path (relative to repo root) to a values file inside a chart's ci/ directory
+          that must be rejected by schema validation. Convention: charts/<name>/ci/<file>.yaml.
+          The chart directory is inferred as two levels up from the file.
+        default: ""
+        required: false
+        type: string
 
 jobs:
 
@@ -43,6 +56,30 @@ jobs:
         if [[ -n "$(ct list-changed --target-branch $GITHUB_BASE_REF)" ]] ; then
           echo "changed=true" >> $GITHUB_OUTPUT
         fi
+
+    - name: Install helm-unittest plugin
+      if: ${{ inputs.run-unit-tests && steps.list-changed.outputs.changed == 'true' }}
+      run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3
+
+    - name: Run unit tests
+      if: ${{ inputs.run-unit-tests && steps.list-changed.outputs.changed == 'true' }}
+      run: |
+        for chart in $(ct list-changed --target-branch $GITHUB_BASE_REF); do
+          if [[ -d "$chart/tests" ]]; then
+            helm unittest "$chart"
+          fi
+        done
+
+    - name: Verify schema rejects legacy values file
+      if: ${{ inputs.schema-reject-values-file != '' }}
+      run: |
+        values_file="${{ inputs.schema-reject-values-file }}"
+        chart_dir="$(dirname "$(dirname "$values_file")")"
+        if helm template schema-reject-check "$chart_dir" -f "$values_file" > /dev/null 2>&1; then
+          echo "ERROR: expected schema rejection for $values_file but helm exited 0"
+          exit 1
+        fi
+        echo "OK: $values_file correctly rejected by schema"
 
     - name: Create kind cluster
       uses: helm/kind-action@v1
