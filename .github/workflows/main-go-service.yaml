@@ -78,6 +78,10 @@ jobs:
         go generate ./...
         echo "::endgroup::"
         
+        echo "::group::go fmt ./..."
+        go fmt ./...
+        echo "::endgroup::"
+        
         echo "::group::go build ."
         go build \
           -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
