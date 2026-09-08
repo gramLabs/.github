@@ -48,7 +48,8 @@ jobs:
       id: project-meta
       run: |
         echo "name=$(basename ${PWD})" >> $GITHUB_OUTPUT
-        echo "dist_dir=./dist/$(basename ${PWD})_linux_amd64_v1" >> $GITHUB_OUTPUT
+        echo "dist_dir_amd64=./dist/$(basename ${PWD})_linux_amd64_v1" >> $GITHUB_OUTPUT
+        echo "dist_dir_arm64=./dist/$(basename ${PWD})_linux_arm64_v8.0" >> $GITHUB_OUTPUT
         echo "version=sha-$(git show --quiet --format=%h)" >> $GITHUB_OUTPUT
         echo "commit=$(git show --quiet --format=%H)" >> $GITHUB_OUTPUT
         echo "date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
@@ -63,12 +64,7 @@ jobs:
           type=raw,priority=1100,value=${{ steps.project-meta.outputs.version }}
           type=edge
 
-    - name: Run Go build
-      env:
-        CGO_ENABLED: "0"
-        GOOS: "linux"
-        GOARCH: "amd64"
-        GOAMD64: "v1"
+    - name: Prebuild
       run: |
         echo "::group::go mod tidy"
         go mod tidy
@@ -81,27 +77,67 @@ jobs:
         echo "::group::go fmt ./..."
         go fmt ./...
         echo "::endgroup::"
-        
-        echo "::group::go build ."
+
+    - name: Run Go build (amd64)
+      env:
+        CGO_ENABLED: "0"
+        GOOS: "linux"
+        GOARCH: "amd64"
+        GOAMD64: "v1"
+      run: |
         go build \
           -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
-          -o "${{ steps.project-meta.outputs.dist_dir }}/${{ steps.project-meta.outputs.name }}" \
+          -o "${{ steps.project-meta.outputs.dist_dir_amd64 }}/${{ steps.project-meta.outputs.name }}" \
           .
-        echo "::endgroup::"
 
-    - name: Build and push
+    - name: Run Go build (arm64)
+      env:
+        CGO_ENABLED: "0"
+        GOOS: "linux"
+        GOARCH: "arm64"
+        GOARM64: "v8.0"
+      run: |
+        go build \
+          -ldflags "-s '-X=main.version=${{ steps.project-meta.outputs.version }}' '-X=main.commit=${{ steps.project-meta.outputs.commit }}' '-X=main.date=${{ steps.project-meta.outputs.date }}'" \
+          -o "${{ steps.project-meta.outputs.dist_dir_arm64 }}/${{ steps.project-meta.outputs.name }}" \
+          .
+
+    - name: Build and push (amd64)
       uses: docker/build-push-action@v7
+      id: build-amd64
       with:
         platforms: linux/amd64
         file: ./Dockerfile
-        context: ${{ steps.project-meta.outputs.dist_dir }}
-        tags: ${{ steps.docker-meta.outputs.tags }}
+        context: ${{ steps.project-meta.outputs.dist_dir_amd64 }}
         labels: ${{ steps.docker-meta.outputs.labels }}
         build-contexts: ${{ inputs.build-contexts }}
         cache-from: type=gha
         cache-to: type=gha
         push: true
         provenance: false
+
+    - name: Build and push (arm64)
+      uses: docker/build-push-action@v7
+      id: build-arm64
+      with:
+        platforms: linux/arm64
+        file: ./Dockerfile
+        context: ${{ steps.project-meta.outputs.dist_dir_arm64 }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
+        build-contexts: ${{ inputs.build-contexts }}
+        cache-from: type=gha
+        cache-to: type=gha
+        push: true
+        provenance: false
+
+    - name: Create manifest
+      run: |
+        tags=( ${{ steps.docker-meta.outputs.tags }} )
+        digests+=( ${{ steps.build-amd64.outputs.digest }} )
+        digests+=( ${{ steps.build-arm64.outputs.digest }} )
+        for tag in ${tags[@]} ; do
+          docker buildx imagetools create --tag ${tag} ${digests[@]}
+        done
 
     - name: Deploy image
       env:
