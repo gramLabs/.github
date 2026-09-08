@@ -65,7 +65,14 @@ jobs:
           type=edge
 
     - name: Prebuild
+      id: prebuild
       run: |
+        echo "::group::Define Platform Tags"
+        tags=( ${{ steps.docker-meta.outputs.tags }} )
+        echo "tags_amd64=$(IFS=,; echo "${tags[*]/%/-amd64}")" >> $GITHUB_OUTPUT
+        echo "tags_arm64=$(IFS=,; echo "${tags[*]/%/-arm64}")" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+        
         echo "::group::go mod tidy"
         go mod tidy
         echo "::endgroup::"
@@ -111,6 +118,7 @@ jobs:
         context: ${{ steps.project-meta.outputs.dist_dir_amd64 }}
         labels: ${{ steps.docker-meta.outputs.labels }}
         build-contexts: ${{ inputs.build-contexts }}
+        tags: ${{ steps.prebuild.outputs.tags_amd64 }}
         cache-from: type=gha
         cache-to: type=gha
         push: true
@@ -125,6 +133,7 @@ jobs:
         context: ${{ steps.project-meta.outputs.dist_dir_arm64 }}
         labels: ${{ steps.docker-meta.outputs.labels }}
         build-contexts: ${{ inputs.build-contexts }}
+        tags: ${{ steps.prebuild.outputs.tags_arm64 }}
         cache-from: type=gha
         cache-to: type=gha
         push: true
