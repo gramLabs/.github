@@ -84,6 +84,14 @@ jobs:
         echo "::group::go fmt ./..."
         go fmt ./...
         echo "::endgroup::"
+        
+        echo "::group::git status"
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Error: The workspace is dirty."
+          git status --porcelain
+          exit 1
+        fi
+        echo "::endgroup::"
 
     - name: Run Go build (amd64)
       env:
