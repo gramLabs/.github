@@ -82,6 +82,14 @@ jobs:
         go fmt ./...
         go build ./...
 
+    - name: Check Git Status
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Error: The workspace is dirty."
+          git status --porcelain
+          exit 1
+        fi
+
   # Callers may define additional jobs for more in-depth acceptance testing on pull requests if necessary
   test:
     name: Test
