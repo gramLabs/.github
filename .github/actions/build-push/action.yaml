@@ -2,7 +2,7 @@ name: 'Build Push'
 description: 'Builds and pushes a Docker image to GHCR.'
 inputs:
   gh-token:
-    description: 'PAT used for triggering workflows.'
+    description: 'PAT used for triggering workflows. Also available to the Docker build as the BuildKit secret `github_token`, for installing private packages.'
     required: true
   build-args:
     description: 'Build arguments for the image'
@@ -12,10 +12,6 @@ inputs:
     description: 'Target platforms for the image'
     required: false
     default: 'linux/amd64,linux/arm64'
-  secrets:
-    description: 'BuildKit secrets for the build, one id=value per line. Unlike build-args, they never land in image layers or history.'
-    required: false
-    default: ''
 
 runs:
   using: "composite"
@@ -50,7 +46,8 @@ runs:
       cache-from: type=gha
       cache-to: type=gha
       build-args: ${{ inputs.build-args }}
-      secrets: ${{ inputs.secrets }}
+      secrets: |
+        github_token=${{ inputs.gh-token }}
 
   - shell: bash
     env:
