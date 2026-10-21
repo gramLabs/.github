@@ -1,0 +1,155 @@
+name: Main
+
+on:
+  workflow_call:
+    inputs:
+      build-args:
+        description: 'Build arguments for the image'
+        required: false
+        default: ''
+        type: string
+      platforms:
+        description: 'Target platforms for the image'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+        type: string
+    # Callers pass gh-token by name; `secrets: inherit` would expose every
+    # caller secret to this workflow.
+    secrets:
+      gh-token:
+        description: 'PAT used for triggering workflows. Also available to the Docker build as the BuildKit secret `github_token`, for installing private packages.'
+        required: true
+
+jobs:
+
+  # Each platform builds on a native runner; QEMU emulation was 3-10x slower.
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.prepare.outputs.image }}
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+    # Fail before building rather than after pushing an unpromotable image.
+    - name: Check promote token
+      env:
+        GH_TOKEN: ${{ secrets.gh-token }}
+      run: |
+        if [ -z "$GH_TOKEN" ]; then
+          echo "::error::gh-token is empty; pass a PAT that can trigger promote_image (e.g. secrets.SERVICES_PACKAGE_PAT)."
+          exit 1
+        fi
+
+    - name: Map platforms to runners
+      id: prepare
+      env:
+        PLATFORMS: ${{ inputs.platforms }}
+      run: |
+        # Assigned before echoing so a jq error fails the step.
+        matrix=$(jq -cn --arg p "$PLATFORMS" '[
+          $p | split(",")[] | gsub("\\s"; "") | select(. != "") | {
+            platform: .,
+            pair: gsub("/"; "-"),
+            runner: (
+              if . == "linux/amd64" then "ubuntu-latest"
+              elif . == "linux/arm64" then "ubuntu-24.04-arm"
+              else error("no native runner for platform \(.)") end
+            )
+          }
+        ]')
+        echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+        echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build (${{ matrix.platform }})
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    # Matrix legs share one outputs map, so each platform writes its own key.
+    # A platform mapped in prepare needs a key here too; merge fails without it.
+    outputs:
+      digest-linux-amd64: ${{ steps.digest.outputs.digest-linux-amd64 }}
+      digest-linux-arm64: ${{ steps.digest.outputs.digest-linux-arm64 }}
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - uses: docker/setup-buildx-action@v4
+
+    - uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: '${{ github.actor }}'
+        password: '${{ github.token }}'
+
+    - uses: docker/metadata-action@v6
+      id: meta
+      with:
+        images: ${{ needs.prepare.outputs.image }}
+
+    # Pushed untagged; the merge job tags the combined index.
+    - uses: docker/build-push-action@v7
+      id: build
+      with:
+        context: .
+        platforms: ${{ matrix.platform }}
+        provenance: false
+        outputs: type=image,name=${{ needs.prepare.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=build-${{ matrix.pair }}
+        cache-to: type=gha,mode=max,scope=build-${{ matrix.pair }}
+        build-args: ${{ inputs.build-args }}
+        secrets: |
+          github_token=${{ secrets.gh-token }}
+
+    - name: Export digest
+      id: digest
+      env:
+        DIGEST: ${{ steps.build.outputs.digest }}
+        PAIR: ${{ matrix.pair }}
+      run: echo "digest-${PAIR}=${DIGEST}" >> $GITHUB_OUTPUT
+
+  merge:
+    name: Merge and Promote
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: docker/setup-buildx-action@v4
+
+    - uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: '${{ github.actor }}'
+        password: '${{ github.token }}'
+
+    - uses: docker/metadata-action@v6
+      id: meta
+      with:
+        images: ${{ needs.prepare.outputs.image }}
+        flavor: latest=false
+        tags: type=sha
+
+    - name: Create manifest list
+      env:
+        IMAGE: ${{ needs.prepare.outputs.image }}
+        TAGS: ${{ steps.meta.outputs.tags }}
+        MATRIX: ${{ needs.prepare.outputs.matrix }}
+        DIGESTS: ${{ toJSON(needs.build.outputs) }}
+      run: |
+        # Assigned before use so a missing digest fails the step.
+        refs=$(jq -rn --arg img "$IMAGE" --argjson m "$MATRIX" --argjson d "$DIGESTS" '
+          $m[] | ($d["digest-\(.pair)"] // "") as $digest
+          | if $digest == "" then error("no digest for \(.platform); is digest-\(.pair) in the build job outputs?")
+            else "\($img)@\($digest)" end')
+        docker buildx imagetools create \
+          $(printf -- '--tag %s ' ${TAGS}) \
+          ${refs}
+
+    - shell: bash
+      env:
+        GH_REPO: gramLabs/stormforge-app
+        GH_TOKEN: ${{ secrets.gh-token }}
+      run: |
+        gh workflow run promote_image.yaml -f image="${{ steps.meta.outputs.tags }}" -f ref_name="${{ github.ref_name }}"
