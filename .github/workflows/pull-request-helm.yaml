@@ -51,7 +51,28 @@ jobs:
 
     - name: Install helm-unittest plugin
       if: ${{ inputs.run-unit-tests && steps.list-changed.outputs.changed == 'true' }}
-      run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3
+      env:
+        HELM_UNITTEST_VERSION: "1.2.1"
+        # helm-unittest release signing key. Update only after confirming a key rotation upstream.
+        HELM_UNITTEST_KEY_FINGERPRINT: "853008CD0B0A5A2DA04FF8A5616AD47F65B54AC7"
+      run: |
+        # Helm 4 verifies plugin signatures against a legacy GPG keyring.
+        # Build an isolated keyring with only the pinned helm-unittest key.
+        export GNUPGHOME="$(mktemp -d)"
+        keyring="$RUNNER_TEMP/helm-unittest-pubring.gpg"
+
+        curl -fsSL "https://raw.githubusercontent.com/helm-unittest/helm-unittest/v${HELM_UNITTEST_VERSION}/public-key.asc" \
+          | gpg --batch --import
+
+        actual_fingerprint="$(gpg --batch --with-colons --fingerprint | awk -F: '/^fpr:/ {print $10; exit}')"
+        if [[ "$actual_fingerprint" != "$HELM_UNITTEST_KEY_FINGERPRINT" ]]; then
+          echo "::error::helm-unittest signing key fingerprint mismatch: expected $HELM_UNITTEST_KEY_FINGERPRINT, got $actual_fingerprint"
+          exit 1
+        fi
+
+        gpg --batch --export "$HELM_UNITTEST_KEY_FINGERPRINT" > "$keyring"
+
+        helm plugin install "oci://ghcr.io/helm-unittest/helm-unittest/unittest:${HELM_UNITTEST_VERSION}" --keyring "$keyring"
 
     - name: Run unit tests
       if: ${{ inputs.run-unit-tests && steps.list-changed.outputs.changed == 'true' }}
